@@ -1,0 +1,9 @@
+{
+       "ap_name": "wifi name",
+       "ap_password": "wifi password",
+       "ap_url": "http://192.168.0.1/",
+       "webhook_key": "Individual key of your webhook service",
+       "webhook_on": "http for webhook to turn light on",
+       "webhook_off": "http for webhook to turn light off",
+       "device": "your device mac address as in modem website"
+}
