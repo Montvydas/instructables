@@ -6,5 +6,5 @@ import gc
 #webrepl.start()
 gc.collect()
 
-import wifi_setup
-wifi_setup.do_connect()
+import wifimanager
+wifimanager.connect()
