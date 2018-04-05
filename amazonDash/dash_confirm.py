@@ -41,24 +41,25 @@ class IftttDevice:
         print 'Sent to', self.name, 'event', event_name
 
 
-class TimedDevice(IftttDevice):
-    def __init__(self, name, ifttt_key, device_on=None, device_off=None, device_toggle=None,
-                 scheduler=None, job_id="device_job", hours=0, minutes=0, seconds=0):
-
-        IftttDevice.__init__(self, name, ifttt_key, device_on=device_on, device_off=device_off, device_toggle=device_toggle)
+class TimedDevice:
+    def __init__(self, device, job_id, trigger_on="turn_on", trigger_off="turn_off", hours=0, minutes=0, seconds=0):
+        self.device = device
         # how long should a single click run for
+        self.trigger_on = trigger_on
+        self.trigger_off = trigger_off
         self.timeout = timedelta(hours=hours, minutes=minutes, seconds=seconds)
         self.scheduler = scheduler
         self.job_id = job_id
 
-    def set_timeout(self, hours, minutes, seconds):
+    def set_timeout(self, hours=0, minutes=0, seconds=0):
         self.timeout = timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
     def stop_timer(self):
         # get the job by the id
         job = self.get_job()
-        # if job exists, remove it
+        # if job exists, remove it and trigger the set off action
         if job:
+            getattr(self.device, self.trigger_off)()
             job.remove()
 
     def start_timer(self):
@@ -67,9 +68,11 @@ class TimedDevice(IftttDevice):
         # if we don't have a job, make one
         if job is None:
             now = datetime.now()
-            self.scheduler.add_job(self.turn_off, trigger='date', run_date=now + self.timeout, id=self.job_id)
-            # turn the device ON now
-            self.turn_on()
+            # Set the trigger OFF function
+            self.scheduler.add_job(getattr(self.device, self.trigger_off),
+                                   trigger='date', run_date=now + self.timeout, id=self.job_id)
+            # now trigger the ON action
+            getattr(self.device, self.trigger_on)()
         else:
             print "Job is already started!"
 
@@ -92,21 +95,19 @@ class TimedDevice(IftttDevice):
 
 
 class DeviceAction:
-    def __init__(self, device, ip, action):
+    def __init__(self, device, mac, action):
         self.device = device
-        self.ip = ip
+        self.mac = mac
         self.action = action
 
     def get_device(self):
         return self.device
 
-    def get_ip(self):
-        return self.ip
+    def get_mac(self):
+        return self.mac
 
     def get_action(self):
         return self.action
-
-
 
 
 class DevicesWithActions:
@@ -116,11 +117,20 @@ class DevicesWithActions:
     def add_device_with_action(self, device_with_action):
         self.devices_with_actions.append(device_with_action)
 
-    def get_from_ip(self, ip):
-        for d in self.devices_with_actions:
-            if d.get_ip() == ip:
-                return d
-        return None
+    def get_from_mac(self, mac):
+        """
+        Gets all of the devices with their action function names
+        matching the given MAC. This allows one device to perform multiple actions.
+
+        @param mac  the mac address of the dash button
+
+        return list of devices with actions
+        """
+        devices = []
+        for dev in self.devices_with_actions:
+            if dev.get_mac() == mac:
+                devices.append(dev)
+        return devices
 
 # create parent function with passed in arguments
 def control_devices(devices_with_actions, scheduler):
@@ -129,21 +139,24 @@ def control_devices(devices_with_actions, scheduler):
     def arp_detect(packet):
         # upload packet, using passed arguments
         if packet[ARP].op == 1:  # network request
-            # get both the device corresponding to the received IP and the delay_job
-            dev = devices_with_actions.get_from_ip(packet[ARP].hwsrc)
+            # get both the device corresponding to the received MAC and the delay_job
+            devices = devices_with_actions.get_from_mac(packet[ARP].hwsrc)
             job = scheduler.get_job("delay_job")
 
-            # if device was found and delay_job finished running, then do:
-            if dev and not job:
-                print 'Received', dev.get_action(), 'request from', dev.get_device().get_name()
+            # if any device was found and delay_job finished running, then do:
+            if devices and not job:
                 # Add a delay job of several seconds to make sure that if we receive
                 # multiples of the same signals, they would be discarded
                 # When that job finishes it calls lambda: None, which basically does nothing
-                timeout = datetime.now() + timedelta(seconds=3)
+                timeout = datetime.now() + timedelta(seconds=2)
                 scheduler.add_job(lambda: None, trigger='date', run_date=timeout, id="delay_job")
-                # Finally call by name. This requires a device e.g. TimedDevice, IftttDevice and
-                # the functions name to be called e.g. start_timer, turn_on, toggle.
-                getattr(dev.get_device(), dev.get_action())()
+
+                for dev in devices:
+                    print 'Received', dev.get_action(), 'request from', dev.get_device().get_name()
+
+                    # Finally call by name. This requires a device e.g. TimedDevice, IftttDevice and
+                    # the functions name to be called e.g. start_timer, turn_on, toggle.
+                    getattr(dev.get_device(), dev.get_action())()
 
     return arp_detect
 
@@ -153,15 +166,25 @@ if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     scheduler.start()
 
+    # Crete an object to store all of our devices
     devices_with_actions = DevicesWithActions()
 
-    heater = TimedDevice('Heater', key, 'heater_on', 'heater_off', scheduler=scheduler, job_id="heater_job", minutes=2)
-    heater_action = DeviceAction(heater, 'fc:a6:67:4c:ad:d9', 'start_timer')
+    # Create Heater: requires name, ifttt key, event name for turning it on & off.
+    # Also make the heater timed. Use default function names for trigger_on and off
+    # and set the timeout to be several minutes.
+    # Finally we specify the functions to be launched when the button is pressed to be
+    # start_or_add_timer. This will add another several minutes to the already running timer
+    # ff the button was pressed and timer already running or start the timer if it wasn't running.
+    heater = IftttDevice('Heater', key, 'heater_on', 'heater_off')
+    timedHeater = TimedDevice(heater, scheduler, "heater_job", seconds=5)
+    heater_action = DeviceAction(timedHeater, 'fc:a6:67:4c:ad:d9', 'start_or_add_timer')
     devices_with_actions.add_device_with_action(heater_action)
 
-    # desk_lamp = IftttDevice('Desk Lamp', key, device_toggle='toggle_desk_lamp')
-    # desk_lamp_action = DeviceAction(desk_lamp, 'fc:a6:67:4c:ad:d9', 'toggle')
-    # devices_with_actions.add_device_with_action(desk_lamp_action)
+    # Create Desk Lamp: same as heater however only device_toggle event name is specified.
+    # It is not timed thus don't create TimerDevice. Enter action name to be toggle.
+    desk_lamp = IftttDevice('Desk Lamp', key, device_toggle='toggle_desk_lamp')
+    desk_lamp_action = DeviceAction(desk_lamp, 'fc:a6:67:27:83:2e', 'toggle')
+    devices_with_actions.add_device_with_action(desk_lamp_action)
 
     print "Started Listening..."
     print sniff(prn=control_devices(devices_with_actions, scheduler), filter="arp", store=0)
