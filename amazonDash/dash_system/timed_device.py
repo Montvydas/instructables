@@ -14,6 +14,9 @@ class TimedDevice:
         self.scheduler = scheduler
         self.job_id = job_id
 
+    def get_name(self):
+        return self.device.get_name()
+
     def set_timeout(self, hours=0, minutes=0, seconds=0):
         self.timeout = timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
