@@ -7,6 +7,7 @@ This project allows to easily use Amazon dash buttons to control your smart home
 Older dash buttons used ARP packets while the new ones use DHCP, thus two scripts are provided. If you are unsure which button do you own, simply try running both scripts, but I suggest you starting from DHCP one. To start listening for dash buttons simply do:
 
 `sudo python dash_start_dhcp.py`
+
 `sudo python dash_start_arp.py`
 
 
@@ -20,9 +21,10 @@ Linux: `sudo pip install apscheduler`
 ARP script requires Scapy and tcpdump:
 
 Mac: `pip install --user scapy`
-Mac: `brew install tcpdump`
+`brew install tcpdump`
+
 Linux: `sudo pip install scapy`
-Linux: `sudo apt-get install tcpdump`
+`sudo apt-get install tcpdump`
 
 DHCP script requires pydhcplib:
 
