@@ -1,32 +1,12 @@
-from pydhcplib.dhcp_network import *
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from ifttt_device import IftttDevice
 from dash_action import DashActions, DashAction
 from timed_device import TimedDevice
+from server import Server
 
 
 netopt = {'client_listen_port': "68", 'server_listen_port': "67", 'listen_address': "0.0.0.0"}
-
-class Server(DhcpServer):
-    def __init__(self, options):
-        DhcpServer.__init__(self, options["listen_address"],
-                            options["client_listen_port"],
-                            options["server_listen_port"])
-
-    def HandleCustomDhcpRequest(self):
-        packet = self.GetNextDhcpPacket()
-        if packet:
-            return self.hwaddr_to_str(packet.GetHardwareAddress())
-        return None
-
-    def hwaddr_to_str(self, hwaddr):
-        result = []
-        hexsym = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
-        for iterator in range(6):
-            result += [str(hexsym[hwaddr[iterator] / 16] + hexsym[hwaddr[iterator] % 16])]
-        return ':'.join(result)
-
 
 if __name__ == "__main__":
     key = "YOUR IFTTT KEY GOES HERE"
