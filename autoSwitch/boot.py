@@ -7,4 +7,4 @@ import gc
 gc.collect()
 
 import wifimanager
-wifimanager.connect()
+wifimanager.connect("SKY58CC4", "VQYWTXQY")

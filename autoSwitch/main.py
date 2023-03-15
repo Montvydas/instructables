@@ -7,6 +7,19 @@ import ujson
 import urequests
 
 
+def post_kasa():
+    url = 'https://wap.tplinkcloud.com'
+    data = {"method": "login", "params": {"appType": "Kasa_Android", "cloudUserName": "montvydas.klumbys@gmail.com",
+                                          "cloudPassword": "{Passs}Passs",
+                                          "terminalUUID": "5da11528-dac3-42f7-859f-cb5fe47d680e"}}
+    r = urequests.post(url, json=data)
+    if r.status_code != 200:
+        return 'Error, could not connect to https://wap.tplinkcloud.com'
+
+    token = r.json()['result']['token']
+    pass
+
+
 def is_device_home(url, device):
     n = len(device)
     _, _, host, path = url.split('/', 3)
@@ -55,9 +68,9 @@ sta_if = network.WLAN(network.STA_IF)
 
 while True:
     # Make a request to the modem to query all of the connected devices
+
     if sta_if.isconnected() and is_device_home(ap_url, device):
         print ("Welcome home!")
     else:
         print ("I guess you're not home yet...")
     time.sleep(5)
-

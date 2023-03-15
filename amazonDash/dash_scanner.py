@@ -3,6 +3,7 @@
 
 from scapy.all import *
 
+
 def arp_display(packet):
     if packet[ARP].op == 1:
         # It seems that amazon dash wouldn't sent ARP probes 
@@ -11,6 +12,7 @@ def arp_display(packet):
         print "Packet from: " + packet[ARP].hwsrc
         if packet[ARP].psrc == '0.0.0.0': # ARP Probe
             print "ARP Probe from: " + packet[ARP].hwsrc
+
 
 # Stop this with ctrl + C
 print sniff(prn=arp_display, filter="arp", store=0, count=10)

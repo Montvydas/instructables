@@ -1,6 +1,5 @@
 import network
 
-
 def connect(username, password):
     sta_if = network.WLAN(network.STA_IF)
     if not sta_if.isconnected():

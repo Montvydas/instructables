@@ -22,7 +22,7 @@ pir = Pin(4, Pin.IN, Pin.PULL_UP)
 pir.irq(trigger=Pin.IRQ_RISING, handler=pir_callback)
 
 # Wait for the PIR sensor to calibrate for 20s
-# sleep(20)
+sleep(20)
 
 # Loop just as in Arduino
 while True:
@@ -34,4 +34,4 @@ while True:
 
         print('PIR activated!')
     # sleep for 0.1 of a second
-    # sleep(0.1)
+    sleep(0.1)

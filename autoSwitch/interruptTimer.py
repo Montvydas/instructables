@@ -1,6 +1,5 @@
 from machine import Pin
 import machine
-from time import sleep
 
 # Global value to communicate with the IRQ routine
 isAwake = 1

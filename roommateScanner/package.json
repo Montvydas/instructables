@@ -1,0 +1,33 @@
+{
+  "name": "hommy_server",
+  "version": "1.0.0",
+  "description": "Server to respond web requests e.g. IFTTT",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "google assistant",
+    "raspberry pi",
+    "server",
+    "node.js"
+  ],
+  "author": "Montvydas Klumbys",
+  "license": "MIT",
+  "homepage": "",
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "dotenv": "^4.0.0",
+    "express": "^4.14.0",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "python-shell": "^0.4.0"
+  },
+  "devDependencies": {
+    "locus": "^1.2.0"
+  }
+}
